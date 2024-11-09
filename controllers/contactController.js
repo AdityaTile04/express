@@ -48,13 +48,17 @@ const updateContact = asychHandler(async (req, res) => {
     { new: true }
   );
   res.status(200).json(updatedContact);
-})
+});
 
 // delete contact
 const deleteContact = asychHandler(async (req, res) => {
-  res.status(200).json({
-    message: `Delete contact for ${req.params.id}`,
-  });
+  const contact = await Contact.findById(req.params.id);
+  if (!contact) {
+    res.status(404);
+    throw new Error("Not Found");
+  }
+  await Contact.remove();
+  res.status(200).json({ message: "Contact deleted successfully" });
 });
 
 module.exports = {
