@@ -70,7 +70,7 @@ const deleteContact = asychHandler(async (req, res) => {
     );
   }
 
-  await Contact.remove();
+  await Contact.deleteOne({ _id: req.params.id });
   res.status(200).json({ message: "Contact deleted successfully" });
 });
 
