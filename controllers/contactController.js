@@ -3,7 +3,7 @@ const Contact = require("../models/contactModel");
 
 // Get all contacts
 const getContacts = asychHandler(async (req, res) => {
-  const contacts = await Contact.find();
+  const contacts = await Contact.find({ user_id: req.user_id });
   res.status(200).json(contacts);
 });
 
@@ -19,7 +19,7 @@ const createContact = asychHandler(async (req, res) => {
     name,
     email,
     phone,
-    password,
+    user_id: req.user_id,
   });
   res.status(201).json(contact);
 });
@@ -42,6 +42,11 @@ const updateContact = asychHandler(async (req, res) => {
     throw new Error("contact not found");
   }
 
+  if (contact.user_id.toString() !== req.user_id) {
+    res.status(403);
+    throw new Error("user don't have permission to update other users contact");
+  }
+
   const updatedContact = await Contact.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -57,6 +62,14 @@ const deleteContact = asychHandler(async (req, res) => {
     res.status(404);
     throw new Error("Not Found");
   }
+
+  if (contact.user_id.toString() !== req.user_id) {
+    res.status(403);
+    throw new Error(
+      "user don't have permission to delete contact of other users"
+    );
+  }
+
   await Contact.remove();
   res.status(200).json({ message: "Contact deleted successfully" });
 });
