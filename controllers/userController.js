@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const dotenv = require("dotenv").config();
 const User = require("../models/userModel");
 
 // register controller
@@ -37,9 +39,30 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // login controller
 const loginUser = asyncHandler(async (req, res) => {
-  res.json({
-    message: "Login the user",
-  });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.send(400);
+    throw new Error("email and password are required");
+  }
+  const user = await User.findOne({ email });
+  // compare password with hashedPassword
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const accessToken = jwt.sign(
+      {
+        user: {
+          username: user.username,
+          email: user.email,
+          id: user.id,
+        },
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1m" }
+    );
+    res.status(200).json(accessToken);
+  } else {
+    res.status(401);
+    throw new Error("email or password not vaild");
+  }
 });
 
 // current user controller
